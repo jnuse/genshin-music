@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  basePath: '/genshin-music',
 
   // 重点：添加下面的 images 配置块来禁用图片优化
   images: {
