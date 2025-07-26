@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 重点：添加下面这两行来启用静态导出
   output: 'export',
   basePath: '/genshin-music',
+
+  // 重点：添加下面的 images 配置块来禁用图片优化
+  images: {
+    unoptimized: true,
+  },
 
   reactStrictMode: false,
   swcMinify: true,
@@ -21,9 +25,9 @@ const nextConfig = {
       layers: true,
       topLevelAwait: true
     }
-    // 注意：在 'export' 模式下，这个 publicPath 不再是必需的，但保留也无妨
     config.output.publicPath = '/_next/'
     return config
   },
 }
+
 export default nextConfig;
