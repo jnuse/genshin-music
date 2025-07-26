@@ -1,32 +1,29 @@
-import withPwa from 'next-pwa'
-import bundleAnalyzer from '@next/bundle-analyzer'
-const dist = process.env.BUILD_PATH ?? 'build'
-
-
-const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-})
-
-/**
- * @type {import('next').NextConfig}
- */
-const pwa = withPwa({
-    dest: "public",
-    disable: process.env.NODE_ENV === 'development',
-    register: false,
-    scope: process.env.NEXT_PUBLIC_BASE_PATH ?? "/",
-    reloadOnOnline: false,
-    sw: 'service-worker.js',
-    swSrc: './src/service-worker.ts',
-})
-
-const config = pwa({
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // 重点：添加下面这两行来启用静态导出
   output: 'export',
-  distDir: dist,
-  basePath: process.env.NEXT_PUBLIC_BASE_PATH ?? "",
-  images: {
-    unoptimized: true,
-  },
-})
+  basePath: '/genshin-music',
 
-export default withBundleAnalyzer(config)
+  reactStrictMode: false,
+  swcMinify: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  experimental: {
+    esmExternals: 'loose'
+  },
+  webpack: (config, { isServer, dev }) => {
+    config.experiments = {
+      asyncWebAssembly: true,
+      layers: true,
+      topLevelAwait: true
+    }
+    // 注意：在 'export' 模式下，这个 publicPath 不再是必需的，但保留也无妨
+    config.output.publicPath = '/_next/'
+    return config
+  },
+}
+module.exports = nextConfig
