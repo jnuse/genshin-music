@@ -1,0 +1,69 @@
+# 工作流名称
+name: Deploy to GitHub Pages
+
+on:
+  # 在每次推送到 main 分支时自动触发
+  push:
+    branches: ['main']
+  # 同时也允许你从 "Actions" 标签页手动触发
+  workflow_dispatch:
+
+# 为工作流设置部署到 GitHub Pages 所需的权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 设置部署的并发控制，确保同一时间只有一个部署在运行
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # 设置部署环境，这会在你的仓库主页右侧显示一个指向网站的链接
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 参考 Deploy.yml，我们使用 Node.js 20.x 版本
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      # 参考 Deploy.yml，我们先安装依赖，然后构建
+      # 注意：这里使用 npm ci 是 CI/CD 环境的最佳实践
+      - name: Install dependencies
+        run: npm ci
+      
+      # 运行构建命令。由于 next.config.js 中设置了 output: 'export'，
+      # 这条命令会自动将静态文件生成到 ./out/ 目录
+      - name: Build project
+        run: npm run build
+        env:
+          # 参考 Deploy.yml，设置 CI: false
+          CI: false
+
+      - name: Create .nojekyll file
+        # 创建 .nojekyll 文件可以防止 GitHub Pages 忽略以下划线开头的文件夹（例如 _next）
+        run: touch ./out/.nojekyll
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        # 将构建产物（./out 目录）打包上传，以便后续步骤使用
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './out'
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        # 使用官方的 Action 将打包好的产物部署到 GitHub Pages
+        uses: actions/deploy-pages@v4
